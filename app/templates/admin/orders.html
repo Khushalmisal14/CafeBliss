@@ -1,0 +1,82 @@
+{% extends 'base.html' %}
+{% block title %}All Orders - CafeBliss{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">📋 All Orders</h2>
+        <a href="{{ url_for('admin.dashboard') }}"
+           class="btn btn-outline-secondary">← Dashboard</a>
+    </div>
+
+    <!-- Filter by status -->
+    <div class="mb-4 d-flex gap-2 flex-wrap">
+        {% for s in ['', 'placed', 'preparing', 'ready', 'delivered'] %}
+        <a href="{{ url_for('admin.all_orders', status=s) }}"
+           class="btn btn-sm {{ 'btn-cafe' if status == s else 'btn-outline-secondary' }}">
+            {{ 'All' if s == '' else s | title }}
+        </a>
+        {% endfor %}
+    </div>
+
+    {% if orders %}
+    <div class="table-responsive">
+        <table class="table table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>#ID</th>
+                    <th>Customer</th>
+                    <th>Amount</th>
+                    <th>Payment</th>
+                    <th>Status</th>
+                    <th>Date</th>
+                    <th>Update Status</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for order in orders %}
+            <tr>
+                <td>#{{ order.id }}</td>
+                <td>{{ order.customer.name }}</td>
+                <td style="color:#c8860a;">₹{{ order.total_amount }}</td>
+                <td>{{ order.payment_method | title }}</td>
+                <td>
+                    <span class="badge"
+                          style="background-color:
+                          {% if order.order_status == 'delivered' %}#28a745
+                          {% elif order.order_status == 'preparing' %}#fd7e14
+                          {% elif order.order_status == 'ready' %}#007bff
+                          {% else %}#6c757d{% endif %};">
+                        {{ order.order_status | title }}
+                    </span>
+                </td>
+                <td>{{ order.created_at.strftime('%d %b, %I:%M %p') }}</td>
+                <td>
+                    <form method="POST"
+                          action="{{ url_for('admin.update_order_status',
+                                            order_id=order.id) }}"
+                          class="d-flex gap-1">
+                        <select name="status" class="form-select form-select-sm"
+                                style="width: auto;">
+                            {% for s in ['placed','preparing','ready','delivered'] %}
+                            <option value="{{ s }}"
+                                {{ 'selected' if order.order_status == s }}>
+                                {{ s | title }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-cafe">✓</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <p class="text-muted">No orders found.</p>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

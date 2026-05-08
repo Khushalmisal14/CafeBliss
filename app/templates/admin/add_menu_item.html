@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+{% block title %}Add Menu Item - CafeBliss{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-7">
+            <div class="card p-4">
+                <h4 class="fw-bold mb-4">➕ Add New Menu Item</h4>
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="mb-3">
+                        <label class="form-label">Item Name</label>
+                        <input type="text" name="name" class="form-control" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Description</label>
+                        <textarea name="description" class="form-control" rows="2"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Price (₹)</label>
+                            <input type="number" name="price" class="form-control"
+                                   step="0.01" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Category</label>
+                            <select name="category_id" class="form-select" required>
+                                {% for cat in categories %}
+                                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Type</label>
+                            <select name="is_veg" class="form-select">
+                                <option value="true">🌿 Veg</option>
+                                <option value="false">🍖 Non-Veg</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Best Time</label>
+                            <select name="time_of_day" class="form-select">
+                                <option value="all">All Day</option>
+                                <option value="morning">Morning</option>
+                                <option value="evening">Evening</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Available?</label>
+                            <select name="is_available" class="form-select">
+                                <option value="true">Yes</option>
+                                <option value="false">No</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label">Item Image (optional)</label>
+                        <input type="file" name="image" class="form-control"
+                               accept="image/*">
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-cafe">Add Item</button>
+                        <a href="{{ url_for('admin.menu_list') }}"
+                           class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

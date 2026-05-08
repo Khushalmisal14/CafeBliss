@@ -1,0 +1,190 @@
+{% extends 'base.html' %}
+{% block title %}AI Recommendations - CafeBliss{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+
+    <div class="text-center mb-5">
+        <h2 class="fw-bold">🤖 AI Food Recommendations</h2>
+        <p class="text-muted">
+            Smart suggestions just for you, {{ current_user.name }}!
+        </p>
+    </div>
+
+    <!-- Offer Banner -->
+    {% if recs['offer'] %}
+    <div class="alert mb-5 text-center fw-bold"
+         style="background: linear-gradient(135deg, #fff8e1, #ffe082);
+                border: 2px solid #c8860a; border-radius: 15px;
+                color: #2c1810; font-size: 1.1rem;">
+        {{ recs['offer']['message'] }}
+        {% if recs['offer']['discount'] > 0 %}
+        <div class="mt-1">
+            <span class="badge" style="background-color:#c8860a; font-size:1rem;">
+                {{ recs['offer']['discount'] }}% OFF
+            </span>
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- Budget Filter -->
+    <div class="card p-4 mb-5">
+        <h5 class="fw-bold mb-3">💰 Budget-Based Search</h5>
+        <form method="GET"
+              action="{{ url_for('customer.recommendations') }}"
+              class="row g-2">
+            <div class="col-md-4">
+                <input type="number" name="budget"
+                       class="form-control"
+                       placeholder="Enter your budget (₹)"
+                       value="{{ budget or '' }}" min="1">
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-cafe w-100">
+                    Find Items
+                </button>
+            </div>
+            {% if budget %}
+            <div class="col-md-2">
+                <a href="{{ url_for('customer.recommendations') }}"
+                   class="btn btn-outline-secondary w-100">Clear</a>
+            </div>
+            {% endif %}
+        </form>
+
+        {% if budget %}
+            {% if recs['budget'] %}
+                <div class="mt-4">
+                    <h6 class="fw-bold">Items within ₹{{ budget }}:</h6>
+                    <div class="row g-3 mt-1">
+                        {% for item in recs['budget'] %}
+                        <div class="col-md-3 col-sm-6">
+                            <div class="card h-100 text-center p-3">
+                                <div style="height:140px; overflow:hidden;
+                                            border-radius:10px; margin-bottom:8px;">
+                                    <img src="{{ url_for('static', filename='uploads/' + item.image)
+                                                if item.image != 'default_food.jpg'
+                                                else url_for('static', filename='images/default_food.jpg') }}"
+                                        alt="{{ item.name }}"
+                                        style="width:100%; height:100%; object-fit:cover;"
+                                        onerror="this.src='{{ url_for('static',
+                                                filename='images/default_food.jpg') }}'">
+                                </div>
+                                <h6 class="fw-bold mt-2">{{ item.name }}</h6>
+                                <p class="text-muted small mb-1">{{ item.category.name }}</p>
+                                <p class="fw-bold" style="color:#c8860a;">₹{{ item.price }}</p>
+                                <form method="POST" action="{{ url_for('customer.add_to_cart', item_id=item.id) }}">
+                                    <button class="btn btn-cafe btn-sm w-100">🛒 Add to Cart</button>
+                                </form>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            {% else %}
+                <p class="text-muted mt-3">No items found within ₹{{ budget }}.</p>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    <!-- Time-Based -->
+    <div class="mb-5">
+        <h4 class="fw-bold mb-1">⏰ Perfect for Right Now</h4>
+        <p class="text-muted small mb-3">Based on the current time of day</p>
+        <div class="row g-3">
+            {% if recs['time_based'] %}
+                {% for item in recs['time_based'] %}
+                <div class="col-md-3 col-sm-6">
+                    <div class="card h-100 text-center p-3">
+                        <div style="font-size:2.5rem;">🍽️</div>
+                        <h6 class="fw-bold mt-2">{{ item.name }}</h6>
+                        <p class="text-muted small mb-1">{{ item.category.name }}</p>
+                        <p class="fw-bold" style="color:#c8860a;">₹{{ item.price }}</p>
+                        <form method="POST" action="{{ url_for('customer.add_to_cart', item_id=item.id) }}">
+                            <button class="btn btn-cafe btn-sm w-100">🛒 Add to Cart</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">No time-based suggestions available.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Personalized -->
+    <div class="mb-5">
+        <h4 class="fw-bold mb-1">💡 Picked for You</h4>
+        <p class="text-muted small mb-3">Based on your order history</p>
+        <div class="row g-3">
+            {% if recs['personalized'] %}
+                {% for item in recs['personalized'] %}
+                <div class="col-md-3 col-sm-6">
+                    <div class="card h-100 text-center p-3">
+                        <div style="font-size:2.5rem;">🍽️</div>
+                        <h6 class="fw-bold mt-2">{{ item.name }}</h6>
+                        <p class="text-muted small mb-1">{{ item.category.name }}</p>
+                        <p class="fw-bold" style="color:#c8860a;">₹{{ item.price }}</p>
+                        <form method="POST" action="{{ url_for('customer.add_to_cart', item_id=item.id) }}">
+                            <button class="btn btn-cafe btn-sm w-100">🛒 Add to Cart</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">Place your first order to get personalized picks!</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Popular -->
+    <div class="mb-5">
+        <h4 class="fw-bold mb-1">🔥 Most Popular</h4>
+        <p class="text-muted small mb-3">What everyone is ordering</p>
+        <div class="row g-3">
+            {% if recs['popular'] %}
+                {% for item in recs['popular'] %}
+                <div class="col-md-3 col-sm-6">
+                    <div class="card h-100 text-center p-3">
+                        <div style="font-size:2.5rem;">🍽️</div>
+                        <h6 class="fw-bold mt-2">{{ item.name }}</h6>
+                        <p class="text-muted small mb-1">{{ item.category.name }}</p>
+                        <p class="fw-bold" style="color:#c8860a;">₹{{ item.price }}</p>
+                        <form method="POST" action="{{ url_for('customer.add_to_cart', item_id=item.id) }}">
+                            <button class="btn btn-cafe btn-sm w-100">🛒 Add to Cart</button>
+                        </form>
+                    </div>
+                </div>
+                {% endfor %}
+            {% else %}
+                <p class="text-muted">No popular items yet.</p>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Combos -->
+    {% if recs['combos'] %}
+    <div class="mb-5">
+        <h4 class="fw-bold mb-1">🎯 Smart Combo Picks</h4>
+        <p class="text-muted small mb-3">Great combinations for a complete meal</p>
+        <div class="row g-3">
+            {% for item in recs['combos'] %}
+            <div class="col-md-3 col-sm-6">
+                <div class="card h-100 text-center p-3">
+                    <div style="font-size:2.5rem;">🍽️</div>
+                    <h6 class="fw-bold mt-2">{{ item.name }}</h6>
+                    <p class="text-muted small mb-1">{{ item.category.name }}</p>
+                    <p class="fw-bold" style="color:#c8860a;">₹{{ item.price }}</p>
+                    <form method="POST" action="{{ url_for('customer.add_to_cart', item_id=item.id) }}">
+                        <button class="btn btn-cafe btn-sm w-100">🛒 Add to Cart</button>
+                    </form>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

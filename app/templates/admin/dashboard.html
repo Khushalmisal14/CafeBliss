@@ -1,0 +1,368 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard - CafeBliss{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-card {
+        border-radius: 20px;
+        padding: 24px;
+        transition: transform 0.2s;
+    }
+    .stat-card:hover { transform: translateY(-4px); }
+    .chart-card {
+        border-radius: 20px;
+        padding: 24px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="fw-bold mb-0">⚙️ Admin Dashboard</h2>
+            <small class="text-muted">
+                Welcome back, {{ current_user.name }} 👋
+            </small>
+        </div>
+        <div class="text-muted small">
+            🕒 {{ now.strftime('%d %B %Y, %I:%M %p') if now else '' }}
+        </div>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="row g-4 mb-5">
+        <div class="col-md-3">
+            <div class="card stat-card text-center">
+                <div style="font-size:2.8rem;">📦</div>
+                <h2 class="fw-bold mt-2" style="color:#c8860a;">
+                    {{ total_orders }}
+                </h2>
+                <p class="text-muted mb-0">Total Orders</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card text-center">
+                <div style="font-size:2.8rem;">💰</div>
+                <h2 class="fw-bold mt-2" style="color:#28a745;">
+                    ₹{{ "%.0f"|format(total_revenue) }}
+                </h2>
+                <p class="text-muted mb-0">Total Revenue</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card text-center">
+                <div style="font-size:2.8rem;">👥</div>
+                <h2 class="fw-bold mt-2" style="color:#007bff;">
+                    {{ total_customers }}
+                </h2>
+                <p class="text-muted mb-0">Customers</p>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card stat-card text-center">
+                <div style="font-size:2.8rem;">🍽️</div>
+                <h2 class="fw-bold mt-2" style="color:#dc3545;">
+                    {{ total_items }}
+                </h2>
+                <p class="text-muted mb-0">Menu Items</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row g-3 mb-5">
+        <div class="col-md-3">
+            <a href="{{ url_for('admin.menu_list') }}"
+               class="btn btn-cafe w-100 py-3 fw-bold">
+                🍽️ Manage Menu
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="{{ url_for('admin.all_orders') }}"
+               class="btn btn-outline-secondary w-100 py-3">
+                📋 View Orders
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="{{ url_for('admin.categories') }}"
+               class="btn btn-outline-secondary w-100 py-3">
+                📂 Categories
+            </a>
+        </div>
+        <div class="col-md-3">
+            <a href="{{ url_for('admin.customers') }}"
+               class="btn btn-outline-secondary w-100 py-3">
+                👥 Customers
+            </a>
+        </div>
+    </div>
+
+    <!-- Charts Row -->
+    <div class="row g-4 mb-5">
+
+        <!-- Revenue Chart -->
+        <div class="col-md-8">
+            <div class="card chart-card">
+                <h5 class="fw-bold mb-4">
+                    📈 Revenue — Last 7 Days
+                </h5>
+                <canvas id="revenueChart" height="120"></canvas>
+            </div>
+        </div>
+
+        <!-- Order Status Pie -->
+        <div class="col-md-4">
+            <div class="card chart-card">
+                <h5 class="fw-bold mb-4">📊 Order Status</h5>
+                <canvas id="statusChart" height="200"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Popular Items Bar Chart -->
+    <div class="card chart-card mb-5">
+        <h5 class="fw-bold mb-4">🔥 Top 5 Popular Items</h5>
+        <canvas id="popularChart" height="80"></canvas>
+    </div>
+
+    <!-- Bottom Row -->
+    <div class="row g-4">
+
+        <!-- Recent Orders Table -->
+        <div class="col-md-8">
+            <div class="card p-4">
+                <div class="d-flex justify-content-between mb-3">
+                    <h5 class="fw-bold mb-0">🕒 Recent Orders</h5>
+                    <a href="{{ url_for('admin.all_orders') }}"
+                       class="btn btn-sm btn-outline-secondary">
+                        View All
+                    </a>
+                </div>
+                {% if recent_orders %}
+                <div class="table-responsive">
+                    <table class="table table-sm align-middle">
+                        <thead>
+                            <tr>
+                                <th>#ID</th>
+                                <th>Customer</th>
+                                <th>Amount</th>
+                                <th>Method</th>
+                                <th>Status</th>
+                                <th>Time</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                        {% for order in recent_orders %}
+                        <tr>
+                            <td class="fw-bold">#{{ order.id }}</td>
+                            <td>{{ order.customer.name }}</td>
+                            <td style="color:#c8860a;">
+                                ₹{{ order.total_amount }}
+                            </td>
+                            <td>
+                                <span class="badge bg-secondary">
+                                    {{ order.payment_method | title }}
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge"
+                                      style="background-color:
+                                      {% if order.order_status == 'delivered' %}
+                                          #28a745
+                                      {% elif order.order_status == 'preparing' %}
+                                          #fd7e14
+                                      {% elif order.order_status == 'ready' %}
+                                          #007bff
+                                      {% else %}#6c757d{% endif %};">
+                                    {{ order.order_status | title }}
+                                </span>
+                            </td>
+                            <td class="text-muted small">
+                                {{ order.created_at.strftime('%d %b, %I:%M %p') }}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center py-3">
+                    No orders yet.
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Popular Items List -->
+        <div class="col-md-4">
+            <div class="card p-4">
+                <h5 class="fw-bold mb-4">🏆 Top Items</h5>
+                {% if popular_items %}
+                {% for i, item in enumerate(popular_items) %}
+                <div class="d-flex justify-content-between
+                            align-items-center mb-3">
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="fw-bold"
+                              style="color:#c8860a; min-width:20px;">
+                            #{{ loop.index }}
+                        </span>
+                        <span>{{ item.name }}</span>
+                    </div>
+                    <span class="badge"
+                          style="background-color:#c8860a;">
+                        {{ item.total_sold }} sold
+                    </span>
+                </div>
+                {% endfor %}
+                {% else %}
+                <p class="text-muted text-center py-3">
+                    No sales data yet.
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+// Detect dark mode
+const isDark = document.documentElement
+                        .getAttribute('data-theme') === 'dark';
+const gridColor  = isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
+const labelColor = isDark ? '#aaa' : '#666';
+
+// ── Revenue Line Chart ──
+const revLabels = [
+    {% for row in daily_revenue %}
+        "{{ row.date }}",
+    {% endfor %}
+];
+const revData = [
+    {% for row in daily_revenue %}
+        {{ row.revenue or 0 }},
+    {% endfor %}
+];
+
+new Chart(document.getElementById('revenueChart'), {
+    type: 'line',
+    data: {
+        labels  : revLabels,
+        datasets: [{
+            label          : 'Revenue (₹)',
+            data           : revData,
+            borderColor    : '#c8860a',
+            backgroundColor: 'rgba(200,134,10,0.15)',
+            borderWidth    : 3,
+            pointRadius    : 5,
+            pointBackgroundColor: '#c8860a',
+            tension        : 0.4,
+            fill           : true,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                labels: { color: labelColor }
+            }
+        },
+        scales: {
+            x: {
+                ticks: { color: labelColor },
+                grid : { color: gridColor  }
+            },
+            y: {
+                ticks: { color: labelColor },
+                grid : { color: gridColor  },
+                beginAtZero: true
+            }
+        }
+    }
+});
+
+// ── Order Status Pie Chart ──
+const statusData = {
+    placed   : {{ recent_orders | selectattr('order_status','eq','placed')   | list | length }},
+    preparing: {{ recent_orders | selectattr('order_status','eq','preparing')| list | length }},
+    ready    : {{ recent_orders | selectattr('order_status','eq','ready')    | list | length }},
+    delivered: {{ recent_orders | selectattr('order_status','eq','delivered')| list | length }},
+};
+
+new Chart(document.getElementById('statusChart'), {
+    type: 'doughnut',
+    data: {
+        labels  : ['Placed', 'Preparing', 'Ready', 'Delivered'],
+        datasets: [{
+            data           : Object.values(statusData),
+            backgroundColor: ['#6c757d','#fd7e14','#007bff','#28a745'],
+            borderWidth    : 0,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels  : { color: labelColor, padding: 12 }
+            }
+        }
+    }
+});
+
+// ── Popular Items Bar Chart ──
+const popLabels = [
+    {% for item in popular_items %}
+        "{{ item.name }}",
+    {% endfor %}
+];
+const popData = [
+    {% for item in popular_items %}
+        {{ item.total_sold }},
+    {% endfor %}
+];
+
+new Chart(document.getElementById('popularChart'), {
+    type: 'bar',
+    data: {
+        labels  : popLabels,
+        datasets: [{
+            label          : 'Units Sold',
+            data           : popData,
+            backgroundColor: [
+                'rgba(200,134,10,0.8)',
+                'rgba(200,134,10,0.65)',
+                'rgba(200,134,10,0.5)',
+                'rgba(200,134,10,0.38)',
+                'rgba(200,134,10,0.25)',
+            ],
+            borderRadius: 8,
+            borderWidth : 0,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: { labels: { color: labelColor } }
+        },
+        scales: {
+            x: {
+                ticks: { color: labelColor },
+                grid : { color: gridColor  }
+            },
+            y: {
+                ticks: { color: labelColor },
+                grid : { color: gridColor  },
+                beginAtZero: true
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

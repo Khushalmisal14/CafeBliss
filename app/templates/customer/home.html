@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+{% block title %}Home - CafeBliss{% endblock %}
+
+{% block content %}
+
+<!-- Hero Section -->
+<section style="background: linear-gradient(135deg, #2c1810, #c8860a);
+                color: white; padding: 80px 0; text-align: center;">
+    <div class="container">
+        <h1 class="display-4 fw-bold mb-3">☕ Welcome to CafeBliss</h1>
+        <p class="lead mb-4">Your favourite cafe, now at your fingertips.<br>
+           Fresh food. Quick orders. AI-powered recommendations.</p>
+        <a href="{{ url_for('customer.menu') }}" class="btn btn-light btn-lg px-5 fw-bold"
+           style="border-radius: 25px; color: #2c1810;">
+            Explore Menu
+        </a>
+    </div>
+</section>
+
+<!-- Categories Section -->
+{% if categories %}
+<section class="container py-5">
+    <h3 class="fw-bold mb-4 text-center">Browse by Category</h3>
+    <div class="row g-3 justify-content-center">
+        {% for cat in categories %}
+        <div class="col-6 col-md-3">
+            <a href="{{ url_for('customer.menu', category=cat.id) }}"
+               class="card text-center p-3 text-decoration-none h-100"
+               style="transition: transform 0.2s;">
+                <div style="font-size: 2rem;">🍽️</div>
+                <p class="fw-bold mt-2 mb-0" style="color: var(--text-color);">{{ cat.name }}</p>
+            </a>
+        </div>
+        {% endfor %}
+    </div>
+</section>
+{% endif %}
+
+<!-- Featured Items -->
+<section class="container py-3 pb-5">
+    <h3 class="fw-bold mb-4 text-center">⭐ Featured Items</h3>
+    {% if featured_items %}
+    <div class="row g-4">
+        {% for item in featured_items %}
+        <div class="col-md-4">
+            <div class="card h-100">
+                <div style="height: 180px; border-radius: 15px 15px 0 0;
+                            overflow: hidden;">
+                    <img src="{{ url_for('static', filename='uploads/' + item.image)
+                                if item.image != 'default_food.jpg'
+                                else url_for('static', filename='images/default_food.jpg') }}"
+                        alt="{{ item.name }}"
+                        style="width:100%; height:100%;
+                                object-fit:cover; object-position:center;"
+                        onerror="this.src='{{ url_for('static',
+                                filename='images/default_food.jpg') }}'">
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <h5 class="card-title fw-bold">{{ item.name }}</h5>
+                        <span class="badge" style="background-color:
+                            {{ '#28a745' if item.is_veg else '#dc3545' }};">
+                            {{ '🌿 Veg' if item.is_veg else '🍖 Non-Veg' }}
+                        </span>
+                    </div>
+                    <p class="text-muted small">{{ item.description or 'A delightful treat!' }}</p>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="fw-bold fs-5" style="color: #c8860a;">
+                            ₹{{ item.price }}
+                        </span>
+                        {% if current_user.is_authenticated %}
+                        <form method="POST"
+                              action="{{ url_for('customer.add_to_cart', item_id=item.id) }}">
+                            <button class="btn btn-cafe btn-sm">
+                                🛒 Add to Cart
+                            </button>
+                        </form>
+                        {% else %}
+                        <a href="{{ url_for('auth.login') }}" class="btn btn-cafe btn-sm">
+                            Login to Order
+                        </a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="text-center py-5">
+        <p class="text-muted fs-5">No items available yet. Check back soon! ☕</p>
+    </div>
+    {% endif %}
+</section>
+
+<!-- AI Recommendation Banner -->
+{% if current_user.is_authenticated %}
+<section class="container pb-5">
+    <div class="card p-4 text-center"
+         style="background: linear-gradient(135deg, #2c1810, #c8860a);
+                color: white; border-radius: 20px;">
+        <h4 class="fw-bold mb-2">🤖 Want Smart Suggestions?</h4>
+        <p class="mb-3 opacity-75">
+            Our AI picks the best items based on your taste,
+            time, and budget!
+        </p>
+        <a href="{{ url_for('customer.recommendations') }}"
+           class="btn btn-light fw-bold px-4"
+           style="border-radius: 25px; color: #2c1810;">
+            Get AI Recommendations
+        </a>
+    </div>
+</section>
+{% endif %}
+
+{% endblock %}

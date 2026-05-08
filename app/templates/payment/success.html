@@ -1,0 +1,54 @@
+{% extends 'base.html' %}
+{% block title %}Order Placed! - CafeBliss{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6 text-center">
+            <div class="card p-5">
+
+                <!-- Success Animation -->
+                <div style="font-size: 5rem; margin-bottom: 1rem;">✅</div>
+
+                <h2 class="fw-bold mb-2" style="color: #28a745;">
+                    Order Placed!
+                </h2>
+                <p class="text-muted mb-4">
+                    Your order <strong>#{{ order.id }}</strong> has been received.<br>
+                    {% if order.payment_method == 'cash' %}
+                        Please pay <strong>₹{{ order.total_amount }}</strong>
+                        at the counter.
+                    {% else %}
+                        Payment of <strong>₹{{ order.total_amount }}</strong>
+                        confirmed online. 🎉
+                    {% endif %}
+                </p>
+
+                <!-- Order Status -->
+                <div class="alert alert-info">
+                    Status: <strong>{{ order.order_status | title }}</strong><br>
+                    Payment: <strong>{{ order.payment_status | title }}</strong>
+                </div>
+
+                <!-- Actions -->
+                <div class="d-flex gap-2 justify-content-center flex-wrap mt-3">
+                    <a href="{{ url_for('payment.download_invoice',
+                                       order_id=order.id) }}"
+                       class="btn btn-cafe">
+                        📄 Download Invoice
+                    </a>
+                    <a href="{{ url_for('customer.orders') }}"
+                       class="btn btn-outline-secondary">
+                        📋 My Orders
+                    </a>
+                    <a href="{{ url_for('customer.menu') }}"
+                       class="btn btn-outline-secondary">
+                        🍽️ Order More
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

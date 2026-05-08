@@ -1,0 +1,47 @@
+{% extends 'base.html' %}
+{% block title %}Customers - CafeBliss{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2 class="fw-bold">👥 All Customers</h2>
+        <a href="{{ url_for('admin.dashboard') }}"
+           class="btn btn-outline-secondary">← Dashboard</a>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Mobile</th>
+                    <th>Verified</th>
+                    <th>Joined</th>
+                    <th>Total Orders</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for c in customers %}
+            <tr>
+                <td>{{ loop.index }}</td>
+                <td class="fw-bold">{{ c.name }}</td>
+                <td>{{ c.email }}</td>
+                <td>{{ c.mobile }}</td>
+                <td>
+                    {% if c.is_verified %}
+                        <span class="badge bg-success">✓ Yes</span>
+                    {% else %}
+                        <span class="badge bg-danger">✗ No</span>
+                    {% endif %}
+                </td>
+                <td>{{ c.created_at.strftime('%d %b %Y') }}</td>
+                <td>{{ c.orders | length }}</td>
+            </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

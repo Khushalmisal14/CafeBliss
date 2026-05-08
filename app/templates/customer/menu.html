@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+{% block title %}Menu - CafeBliss{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+
+    <h2 class="fw-bold mb-4 text-center">☕ Our Menu</h2>
+
+    <!-- Search & Filter Bar -->
+    <form method="GET" action="{{ url_for('customer.menu') }}" class="row g-2 mb-4">
+        <div class="col-md-6">
+            <input type="text" name="search" class="form-control"
+                   placeholder="🔍 Search items..." value="{{ search }}">
+        </div>
+        <div class="col-md-4">
+            <select name="category" class="form-select">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                <option value="{{ cat.id }}"
+                    {{ 'selected' if selected_category == cat.id }}>
+                    {{ cat.name }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-cafe w-100">Filter</button>
+        </div>
+    </form>
+
+    <!-- Menu Items Grid -->
+    {% if items %}
+    <div class="row g-4">
+        {% for item in items %}
+        <div class="col-md-4 col-sm-6">
+            <div class="card h-100">
+                <div style="height: 180px; border-radius: 15px 15px 0 0;
+                            overflow: hidden;">
+                    <img src="{{ url_for('static', filename='uploads/' + item.image)
+                                if item.image != 'default_food.jpg'
+                                else url_for('static', filename='images/default_food.jpg') }}"
+                        alt="{{ item.name }}"
+                        style="width:100%; height:100%;
+                                object-fit:cover; object-position:center;"
+                        onerror="this.src='{{ url_for('static',
+                                filename='images/default_food.jpg') }}'">
+                </div>
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <h5 class="fw-bold">{{ item.name }}</h5>
+                        <span class="badge"
+                              style="background-color:
+                                  {{ '#28a745' if item.is_veg else '#dc3545' }};
+                                  height: fit-content;">
+                            {{ '🌿' if item.is_veg else '🍖' }}
+                        </span>
+                    </div>
+                    <p class="text-muted small mb-2">
+                        {{ item.description or 'A delightful treat!' }}
+                    </p>
+                    <span class="badge bg-secondary small">
+                        {{ item.category.name }}
+                    </span>
+                    <div class="d-flex justify-content-between align-items-center mt-3">
+                        <span class="fw-bold fs-5" style="color: #c8860a;">
+                            ₹{{ item.price }}
+                        </span>
+                        {% if current_user.is_authenticated %}
+                        <form method="POST"
+                              action="{{ url_for('customer.add_to_cart', item_id=item.id) }}">
+                            <button class="btn btn-cafe btn-sm">
+                                🛒 Add
+                            </button>
+                        </form>
+                        {% else %}
+                        <a href="{{ url_for('auth.login') }}"
+                           class="btn btn-cafe btn-sm">Login</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="text-center py-5">
+        <h4 class="text-muted">😔 No items found.</h4>
+        <a href="{{ url_for('customer.menu') }}" class="btn btn-cafe mt-3">
+            Clear Filters
+        </a>
+    </div>
+    {% endif %}
+
+</div>
+{% endblock %}

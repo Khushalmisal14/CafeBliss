@@ -1,0 +1,260 @@
+{% extends 'base.html' %}
+{% block title %}AI Chatbot - CafeBliss{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+
+            <div class="text-center mb-4">
+                <h2 class="fw-bold">🤖 CafeBliss AI Assistant</h2>
+                <p class="text-muted">
+                    Ask me anything about our menu, orders, timings and more!
+                </p>
+            </div>
+
+            <!-- Chat Window -->
+            <div class="card" style="border-radius: 20px; overflow: hidden;">
+
+                <!-- Chat Header -->
+                <div style="background: linear-gradient(135deg, #2c1810, #c8860a);
+                            padding: 16px 20px; color: white;"
+                     class="d-flex align-items-center gap-3">
+                    <div style="width:45px; height:45px; border-radius:50%;
+                                background:rgba(255,255,255,0.2);
+                                display:flex; align-items:center;
+                                justify-content:center; font-size:1.4rem;">
+                        🤖
+                    </div>
+                    <div>
+                        <div class="fw-bold">CafeBliss Assistant</div>
+                        <small style="opacity:0.8;">
+                            <span style="color:#90EE90;">●</span>
+                            Always Online
+                        </small>
+                    </div>
+                </div>
+
+                <!-- Messages Area -->
+                <div id="chat-messages"
+                     style="height: 420px; overflow-y: auto;
+                            padding: 20px; background: var(--bg-color);">
+
+                    <!-- Welcome message -->
+                    <div class="d-flex gap-2 mb-3">
+                        <div style="font-size:1.5rem; min-width:36px;">🤖</div>
+                        <div style="background: var(--card-bg);
+                                    border-radius: 0 15px 15px 15px;
+                                    padding: 12px 16px; max-width: 80%;
+                                    box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                            <p class="mb-0" style="white-space: pre-line;">
+                                Hello! 👋 Welcome to CafeBliss!
+                                I'm your AI assistant. How can I help you today?
+
+                                You can ask me about:
+                                • Our menu items 🍽️
+                                • Cafe timings ⏰
+                                • Your orders 📋
+                                • Payments 💳
+                                • Recommendations 🤖
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Previous message if form submitted -->
+                    {% if user_message and response %}
+                    <!-- User message -->
+                    <div class="d-flex gap-2 mb-3 flex-row-reverse">
+                        <div style="font-size:1.5rem; min-width:36px;">👤</div>
+                        <div style="background: linear-gradient(135deg, #c8860a, #a0522d);
+                                    color: white;
+                                    border-radius: 15px 0 15px 15px;
+                                    padding: 12px 16px; max-width: 80%;">
+                            <p class="mb-0">{{ user_message }}</p>
+                        </div>
+                    </div>
+                    <!-- Bot response -->
+                    <div class="d-flex gap-2 mb-3">
+                        <div style="font-size:1.5rem; min-width:36px;">🤖</div>
+                        <div style="background: var(--card-bg);
+                                    border-radius: 0 15px 15px 15px;
+                                    padding: 12px 16px; max-width: 80%;
+                                    box-shadow: 0 2px 8px rgba(0,0,0,0.08);">
+                            <p class="mb-0" style="white-space: pre-line;">
+                                {{ response }}
+                            </p>
+                        </div>
+                    </div>
+                    {% endif %}
+
+                    <!-- Live chat messages injected by JS -->
+                    <div id="live-messages"></div>
+                </div>
+
+                <!-- Quick Questions -->
+                <div style="padding: 10px 20px;
+                            background: var(--card-bg);
+                            border-top: 1px solid rgba(0,0,0,0.08);">
+                    <small class="text-muted">Quick questions:</small>
+                    <div class="d-flex flex-wrap gap-2 mt-1">
+                        {% set quick = [
+                            'What are your timings?',
+                            'Show me the menu',
+                            'My order status',
+                            'Payment options',
+                            'Best combos',
+                            'Where are you located?'
+                        ] %}
+                        {% for q in quick %}
+                        <button onclick="sendQuick('{{ q }}')"
+                                class="btn btn-sm btn-outline-secondary"
+                                style="border-radius: 20px; font-size: 0.78rem;">
+                            {{ q }}
+                        </button>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div style="padding: 16px 20px;
+                            background: var(--card-bg);
+                            border-top: 1px solid rgba(0,0,0,0.08);">
+                    <div class="d-flex gap-2">
+                        <input type="text" id="chat-input"
+                               class="form-control"
+                               placeholder="Type your message..."
+                               style="border-radius: 25px;"
+                               onkeypress="handleKey(event)">
+                        <button onclick="sendMessage()"
+                                class="btn btn-cafe px-4"
+                                style="border-radius: 25px; min-width: 80px;">
+                            Send ➤
+                        </button>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Suggested Topics -->
+            <div class="card p-4 mt-4">
+                <h6 class="fw-bold mb-3">💡 What I can help with:</h6>
+                <div class="row g-2">
+                    {% set topics = [
+                        ('🍽️', 'Menu & Prices', 'What food do you serve?'),
+                        ('⏰', 'Timings',       'What are your opening hours?'),
+                        ('📋', 'Order Status',  'Where is my order?'),
+                        ('💳', 'Payments',      'How can I pay?'),
+                        ('📍', 'Location',      'Where are you located?'),
+                        ('🎯', 'Combos',        'What combos do you have?'),
+                    ] %}
+                    {% for emoji, label, question in topics %}
+                    <div class="col-md-4">
+                        <button onclick="sendQuick('{{ question }}')"
+                                class="btn btn-outline-secondary w-100 p-2"
+                                style="border-radius: 10px; text-align: left;">
+                            {{ emoji }} {{ label }}
+                        </button>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+const liveMessages = document.getElementById('live-messages');
+const chatMessages = document.getElementById('chat-messages');
+const chatInput    = document.getElementById('chat-input');
+
+// Scroll chat to bottom
+function scrollBottom() {
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+scrollBottom();
+
+// Add message bubble to chat
+function addMessage(text, isUser) {
+    const wrapper = document.createElement('div');
+    wrapper.className = 'd-flex gap-2 mb-3' + (isUser ? ' flex-row-reverse' : '');
+
+    const icon = document.createElement('div');
+    icon.style.cssText = 'font-size:1.5rem; min-width:36px;';
+    icon.textContent   = isUser ? '👤' : '🤖';
+
+    const bubble = document.createElement('div');
+    bubble.style.cssText = isUser
+        ? 'background:linear-gradient(135deg,#c8860a,#a0522d);color:white;border-radius:15px 0 15px 15px;padding:12px 16px;max-width:80%;'
+        : 'background:var(--card-bg);border-radius:0 15px 15px 15px;padding:12px 16px;max-width:80%;box-shadow:0 2px 8px rgba(0,0,0,0.08);';
+
+    const p = document.createElement('p');
+    p.className        = 'mb-0';
+    p.style.whiteSpace = 'pre-line';
+    p.textContent      = text;
+
+    bubble.appendChild(p);
+    wrapper.appendChild(icon);
+    wrapper.appendChild(bubble);
+    liveMessages.appendChild(wrapper);
+    scrollBottom();
+}
+
+// Typing indicator
+function showTyping() {
+    const div  = document.createElement('div');
+    div.id     = 'typing';
+    div.className = 'd-flex gap-2 mb-3';
+    div.innerHTML = `
+        <div style="font-size:1.5rem;min-width:36px;">🤖</div>
+        <div style="background:var(--card-bg);border-radius:0 15px 15px 15px;
+                    padding:12px 16px;box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+            <span style="color:#c8860a;">● ● ●</span>
+        </div>`;
+    liveMessages.appendChild(div);
+    scrollBottom();
+}
+
+function hideTyping() {
+    const t = document.getElementById('typing');
+    if (t) t.remove();
+}
+
+// Send message via API
+async function sendMessage() {
+    const text = chatInput.value.trim();
+    if (!text) return;
+
+    chatInput.value = '';
+    addMessage(text, true);
+    showTyping();
+
+    try {
+        const res  = await fetch('/chatbot/api', {
+            method : 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body   : JSON.stringify({ message: text })
+        });
+        const data = await res.json();
+        hideTyping();
+        addMessage(data.response, false);
+    } catch (e) {
+        hideTyping();
+        addMessage('Sorry, something went wrong. Please try again! 😊', false);
+    }
+}
+
+// Quick question buttons
+function sendQuick(question) {
+    chatInput.value = question;
+    sendMessage();
+}
+
+// Send on Enter key
+function handleKey(event) {
+    if (event.key === 'Enter') sendMessage();
+}
+</script>
+{% endblock %}

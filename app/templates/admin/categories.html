@@ -1,0 +1,41 @@
+{% extends 'base.html' %}
+{% block title %}Categories - CafeBliss{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <h2 class="fw-bold mb-4">📂 Manage Categories</h2>
+
+            <!-- Add Category -->
+            <div class="card p-4 mb-4">
+                <h5 class="fw-bold mb-3">Add New Category</h5>
+                <form method="POST" class="d-flex gap-2">
+                    <input type="text" name="name" class="form-control"
+                           placeholder="Category name" required>
+                    <button type="submit" class="btn btn-cafe">Add</button>
+                </form>
+            </div>
+
+            <!-- Category List -->
+            <div class="card p-4">
+                <h5 class="fw-bold mb-3">All Categories</h5>
+                {% for cat in categories %}
+                <div class="d-flex justify-content-between
+                            align-items-center mb-2 pb-2 border-bottom">
+                    <span>{{ cat.name }}
+                        <small class="text-muted">({{ cat.items | length }} items)</small>
+                    </span>
+                    <a href="{{ url_for('admin.delete_category', cat_id=cat.id) }}"
+                       class="btn btn-sm btn-outline-danger"
+                       onclick="return confirm('Delete this category?')">🗑️</a>
+                </div>
+                {% endfor %}
+            </div>
+
+            <a href="{{ url_for('admin.dashboard') }}"
+               class="btn btn-outline-secondary mt-3">← Dashboard</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

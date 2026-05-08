@@ -1,0 +1,205 @@
+{% extends 'base.html' %}
+{% block title %}Checkout - CafeBliss{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <h2 class="fw-bold mb-4">💳 Checkout</h2>
+
+    <div class="row">
+
+        <!-- Order Summary -->
+        <div class="col-md-7">
+            <div class="card p-4 mb-4">
+                <h5 class="fw-bold mb-3">📋 Order Summary</h5>
+                {% for item in cart_items %}
+                <div class="d-flex justify-content-between
+                            mb-2 pb-2 border-bottom">
+                    <div>
+                        <span class="fw-bold">
+                            {{ item.menu_item.name }}
+                        </span>
+                        <small class="text-muted">
+                            x{{ item.quantity }}
+                        </small>
+                    </div>
+                    <span>
+                        ₹{{ item.menu_item.price * item.quantity }}
+                    </span>
+                </div>
+                {% endfor %}
+
+                <div class="d-flex justify-content-between mt-2">
+                    <span>Subtotal</span>
+                    <span>₹{{ subtotal }}</span>
+                </div>
+                <div class="d-flex justify-content-between text-muted">
+                    <span>Tax (5%)</span>
+                    <span>₹{{ tax }}</span>
+                </div>
+                <hr>
+                <div class="d-flex justify-content-between
+                            fw-bold fs-5">
+                    <span>Total</span>
+                    <span style="color:#c8860a;">₹{{ total }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Options -->
+        <div class="col-md-5">
+            <div class="card p-4">
+                <h5 class="fw-bold mb-4">💰 Payment Method</h5>
+
+                <!-- Cash -->
+                <form method="POST"
+                      action="{{ url_for('payment.place_order_cash') }}">
+                    <button type="submit"
+                            class="btn btn-outline-secondary w-100 py-3 mb-3">
+                        💵 Pay at Counter (Cash)
+                    </button>
+                </form>
+
+                <!-- Online -->
+                {% if razorpay_key %}
+                <button onclick="payOnline()"
+                        id="pay-btn"
+                        class="btn btn-cafe w-100 py-3">
+                    💳 Pay Online — ₹{{ total }}
+                </button>
+                <p class="text-muted small text-center mt-2">
+                    UPI · Cards · Net Banking · Wallets
+                </p>
+                {% else %}
+                <div class="alert alert-warning small">
+                    ⚠️ Online payment not configured.<br>
+                    Please use Cash payment.
+                </div>
+                {% endif %}
+
+                <a href="{{ url_for('customer.cart') }}"
+                   class="btn btn-link w-100 mt-2 text-muted">
+                    ← Back to Cart
+                </a>
+            </div>
+
+            <!-- Test Card Info -->
+            {% if razorpay_key and 'test' in razorpay_key %}
+            <div class="card p-3 mt-3"
+                 style="border: 1px dashed #c8860a;">
+                <p class="fw-bold mb-2 small">
+                    🧪 Test Mode — Use these details:
+                </p>
+                <small>
+                    <b>Card:</b> 4111 1111 1111 1111<br>
+                    <b>Expiry:</b> Any future date<br>
+                    <b>CVV:</b> Any 3 digits<br>
+                    <b>OTP:</b> 1234<br>
+                    <b>UPI:</b> success@razorpay
+                </small>
+            </div>
+            {% endif %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+{% if razorpay_key %}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+async function payOnline() {
+    const btn = document.getElementById('pay-btn');
+    btn.disabled    = true;
+    btn.textContent = '⏳ Processing...';
+
+    try {
+        // Step 1: Backend se Razorpay order banao
+        const res = await fetch(
+            "{{ url_for('payment.create_razorpay_order') }}",
+            {
+                method : 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body   : JSON.stringify({})
+            }
+        );
+
+        const data = await res.json();
+
+        if (data.error) {
+            alert('Error: ' + data.error);
+            btn.disabled    = false;
+            btn.textContent = '💳 Pay Online — ₹{{ total }}';
+            return;
+        }
+
+        // Step 2: Razorpay popup kholo
+        const options = {
+            key         : "{{ razorpay_key }}",
+            amount      : data.amount,
+            currency    : data.currency,
+            name        : 'CafeBliss ☕',
+            description : 'Food Order Payment',
+            order_id    : data.order_id,
+            prefill     : {
+                name   : data.name,
+                email  : data.email,
+                contact: data.mobile
+            },
+            theme       : { color: '#c8860a' },
+            modal       : {
+                ondismiss: function() {
+                    btn.disabled    = false;
+                    btn.textContent = '💳 Pay Online — ₹{{ total }}';
+                }
+            },
+
+            // Step 3: Payment success hone par verify karo
+            handler: async function(response) {
+                btn.textContent = '✅ Verifying...';
+
+                const verify = await fetch(
+                    "{{ url_for('payment.verify_payment') }}",
+                    {
+                        method : 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            razorpay_order_id  :
+                                response.razorpay_order_id,
+                            razorpay_payment_id:
+                                response.razorpay_payment_id,
+                            razorpay_signature :
+                                response.razorpay_signature
+                        })
+                    }
+                );
+
+                const result = await verify.json();
+
+                if (result.success) {
+                    window.location.href =
+                        '/payment/success/' + result.order_id;
+                } else {
+                    alert('Payment verify nahi hua. ' +
+                          'Support se contact karo.');
+                    btn.disabled    = false;
+                    btn.textContent = '💳 Pay Online — ₹{{ total }}';
+                }
+            }
+        };
+
+        const rzp = new Razorpay(options);
+        rzp.open();
+
+    } catch(e) {
+        console.error(e);
+        alert('Kuch galat hua. Dobara try karo.');
+        btn.disabled    = false;
+        btn.textContent = '💳 Pay Online — ₹{{ total }}';
+    }
+}
+</script>
+{% endif %}
+{% endblock %}

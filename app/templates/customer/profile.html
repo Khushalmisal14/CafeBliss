@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% block title %}My Profile - CafeBliss{% endblock %}
+
+{% block content %}
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card p-4 text-center">
+
+                <!-- Avatar -->
+                <div style="width:90px; height:90px; border-radius:50%;
+                            background:linear-gradient(135deg,#c8860a,#2c1810);
+                            display:flex; align-items:center;
+                            justify-content:center; font-size:2.5rem;
+                            margin: 0 auto 16px auto; color:white;">
+                    {{ current_user.name[0].upper() }}
+                </div>
+
+                <h3 class="fw-bold mb-0">{{ current_user.name }}</h3>
+                <p class="text-muted mb-1">{{ current_user.email }}</p>
+                <p class="text-muted small mb-4">
+                    📱 {{ current_user.mobile }}
+                </p>
+
+                <!-- Stats -->
+                <div class="row g-3 mb-4">
+                    <div class="col-6">
+                        <div class="card p-3">
+                            <h4 class="fw-bold mb-0" style="color:#c8860a;">
+                                {{ total_orders }}
+                            </h4>
+                            <small class="text-muted">Total Orders</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="card p-3">
+                            <h4 class="fw-bold mb-0" style="color:#28a745;">
+                                ₹{{ "%.0f"|format(total_spent) }}
+                            </h4>
+                            <small class="text-muted">Total Spent</small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Member Since -->
+                <p class="text-muted small mb-4">
+                    🗓️ Member since
+                    {{ current_user.created_at.strftime('%B %Y') }}
+                </p>
+
+                <!-- Actions -->
+                <div class="d-flex gap-2 justify-content-center">
+                    <a href="{{ url_for('customer.orders') }}"
+                       class="btn btn-cafe">
+                        📋 My Orders
+                    </a>
+                    <a href="{{ url_for('customer.recommendations') }}"
+                       class="btn btn-outline-secondary">
+                        🤖 AI Picks
+                    </a>
+                    <a href="{{ url_for('auth.logout') }}"
+                       class="btn btn-outline-danger">
+                        Logout
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
