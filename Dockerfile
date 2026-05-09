@@ -18,4 +18,4 @@ RUN mkdir -p app/static/uploads
 
 EXPOSE 5000
 
-CMD ["gunicorn", "--bind", "0.0.0.0:$PORT", "run:app"]
+CMD gunicorn --bind 0.0.0.0:$PORT run:app
