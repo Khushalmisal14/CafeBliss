@@ -2,5 +2,5 @@
 builder = "dockerfile"
 
 [deploy]
-startCommand = "gunicorn --bind 0.0.0.0:$PORT run:app"
+startCommand = "gunicorn --bind 0.0.0.0:8080 run:app"
 restartPolicyType = "always"
